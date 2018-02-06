@@ -1,7 +1,7 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img, input)
-import Html.Attributes exposing (src, class)
+import Html exposing (Html, text, div, img, input, h1, h2, a, button)
+import Html.Attributes exposing (src, class, href)
 import Html.Events exposing (onClick)
 import Http
 import Dict exposing (Dict)
@@ -45,6 +45,7 @@ type alias Model =
     , rows : List (Dict String String)
     , sortBy : SortBy
     , curFilters : List Filter
+    , isLegendVisible : Bool
     }
 
 
@@ -59,6 +60,7 @@ init =
       , rows = []
       , sortBy = Asc Nothing
       , curFilters = initFilters
+      , isLegendVisible = False
       }
     , getRawCsv
     )
@@ -83,6 +85,7 @@ type Msg
     | ReceiveCsv (Result Http.Error String)
     | ToggleSortBy String
     | ToggleFilter Filter
+    | ToggleLegend
 
 
 rowToDict : List String -> List String -> Dict String String
@@ -137,6 +140,9 @@ update msg model =
                     List.map (updateFilter filter) model.curFilters
             in
                 ( { model | curFilters = updatedFilters }, Cmd.none )
+
+        ToggleLegend ->
+            ( { model | isLegendVisible = not model.isLegendVisible }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
@@ -224,7 +230,7 @@ viewHeader sortBy header =
 
 viewHeaders : List String -> SortBy -> Html Msg
 viewHeaders headers sortBy =
-    div [ class "row" ] (List.map (viewHeader sortBy) headers)
+    div [ class "row headers" ] (List.map (viewHeader sortBy) headers)
 
 
 viewCell : String -> Html Msg
@@ -331,10 +337,10 @@ viewFilterOption filter curFilters =
         display =
             case List.member filter curFilters of
                 True ->
-                    "active-filter"
+                    "active-filter filter-option"
 
                 False ->
-                    ""
+                    "filter-option"
     in
         div [ onClick (ToggleFilter filter), class display ] [ text label ]
 
@@ -350,25 +356,114 @@ viewFilter curFilters filterName =
 
 viewFilters : List Filter -> Html Msg
 viewFilters curFilters =
-    div [ class "row" ]
-        (List.map (viewFilter curFilters) filterableCols)
+    div []
+        [ h2 [] [ text "Filters" ]
+        , div [ class "row filters" ]
+            (List.map (viewFilter curFilters) filterableCols)
+        ]
 
 
 viewRankings : Model -> Html Msg
 viewRankings model =
-    div []
-        [ viewFilters model.curFilters
-        , viewHeaders model.headers model.sortBy
+    div [ class "rankings" ]
+        [ viewHeaders model.headers model.sortBy
         , viewRows model
         ]
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ div [] [ text "Rankings" ]
+    div [ class "main" ]
+        [ div [] [ h1 [] [ text "Halloween Candy Power Rankings" ] ]
+        , viewAbout model.isLegendVisible
+        , viewFilters model.curFilters
         , viewRankings model
         ]
+
+
+viewAbout : Bool -> Html Msg
+viewAbout isExpanded =
+    let
+        showExpansionOption =
+            case isExpanded of
+                True ->
+                    "Hide legend for columns and filters"
+
+                False ->
+                    "Show legend for columns and filters"
+    in
+        div []
+            [ div []
+                [ text "Candy rankings based on data from FiveThirtyEight: "
+                , a [ href "https://github.com/fivethirtyeight/data/tree/master/candy-power-ranking" ] [ text "Link to source" ]
+                ]
+            , text "Use the filters below to explore which candy was the top in its category and click on the column names to sort by a specific column"
+            , div [ onClick ToggleLegend, class "legend-button" ] [ text showExpansionOption ]
+            , viewLegend isExpanded
+            ]
+
+
+viewLegend : Bool -> Html Msg
+viewLegend isExpanded =
+    case isExpanded of
+        False ->
+            text ""
+
+        True ->
+            div [ class "legend" ]
+                [ div [ class "row headers" ]
+                    [ div [ class "cell" ] [ text "Header" ]
+                    , div [ class "cell" ] [ text "Description" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "chocolate" ]
+                    , div [ class "cell" ] [ text "Does it contain chocolate?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "fruity" ]
+                    , div [ class "cell" ] [ text "Is it fruit flavored?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "caramel" ]
+                    , div [ class "cell" ] [ text "Is there caramel in the candy?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "peanutalmondy" ]
+                    , div [ class "cell" ] [ text "Does it contain peanuts, peanut butter or almonds?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "nougat" ]
+                    , div [ class "cell" ] [ text "Does it contain nougat?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "crispedricewafer" ]
+                    , div [ class "cell" ] [ text "Does it contain crisped rice, wafers, or a cookie component?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "hard" ]
+                    , div [ class "cell" ] [ text "Is it a hard candy?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "bar" ]
+                    , div [ class "cell" ] [ text "Is it a candy bar?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "pluribus" ]
+                    , div [ class "cell" ] [ text "Is it one of many candies in a bag or box?" ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "sugarpercent" ]
+                    , div [ class "cell" ] [ text "The percentile of sugar it falls under within the data set." ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "pricepercent" ]
+                    , div [ class "cell" ] [ text "The unit price percentile compared to the rest of the set." ]
+                    ]
+                , div [ class "row" ]
+                    [ div [ class "cell" ] [ text "winpercent" ]
+                    , div [ class "cell" ] [ text "The overall win percentage according to 269,000 matchups." ]
+                    ]
+                ]
 
 
 

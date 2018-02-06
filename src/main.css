@@ -1,11 +1,32 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
   color: #293c4b;
+  background-image: url('http://ak1.picdn.net/shutterstock/videos/26511221/thumb/1.jpg');
 }
 
 .row {
   display: flex;
+}
+
+.row:nth-child(2n) {
+  background: #ececec;
+}
+
+.row:hover {
+  font-weight: bold;
+}
+
+.row.filters {
+  background: transparent;
+}
+
+.row.filters:hover, .row.headers:hover {
+  font-weight: normal;
 }
 
 .cell {
@@ -13,20 +34,72 @@ body {
   overflow: hidden;
   flex-grow: 1;
   flex-basis: 0;
+  cursor: default;
+}
+
+.cell.desc, .cell.asc {
+  color: #2196f3;
 }
 
 .cell.desc:before {
-  content: "▴";
+  content: "▴ ";
 }
 
 .cell.asc:before {
-  content: "▾";
+  content: "▾ ";
 }
 
 .cell.hidden {
    display: none;
 }
 
+.headers .cell, .filters .cell, .legend .cell {
+  cursor: pointer;
+}
+
+.legend .headers.row {
+  font-weight: bold;
+}
+
+.legend .row:nth-child(2n) {
+  background: transparent;
+}
+
+.legend .cell {
+  padding: 2px;
+}
+
+.legend .cell:nth-child(2n) {
+  flex-grow: 4;
+}
+
 .active-filter {
-  color: red;
+  color: #2196f3;
+}
+
+.filter-option:hover {
+  text-decoration: underline;
+}
+
+.main {
+  background: rgba(255, 255, 255, .8);
+  padding: 40px;
+}
+
+h1 {
+  margin: 0;
+}
+
+.rankings {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 10px 1px #d3d1d1;
+}
+
+.legend-button {
+  cursor: pointer;
+  margin-top: 10px;
+  color: #2196f3;
+  text-decoration: underline;
+  font-weight: bold;
 }
