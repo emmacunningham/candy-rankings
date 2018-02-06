@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img)
+import Html exposing (Html, text, div, img, input)
 import Html.Attributes exposing (src, class)
 import Html.Events exposing (onClick)
 import Http
@@ -12,6 +12,19 @@ visibleCols =
     [ "competitorname", "sugarpercent", "pricepercent", "winpercent" ]
 
 
+filterableCols : List String
+filterableCols =
+    [ "fruity"
+    , "caramel"
+    , "peanutyalmondy"
+    , "nougat"
+    , "crispedricewafer"
+    , "hard"
+    , "bar"
+    , "pluribus"
+    ]
+
+
 
 ---- MODEL ----
 
@@ -21,11 +34,23 @@ type SortBy
     | Desc (Maybe String)
 
 
+type Filter
+    = Include String
+    | Exclude String
+    | All String
+
+
 type alias Model =
     { headers : List String
     , rows : List (Dict String String)
     , sortBy : SortBy
+    , curFilters : List Filter
     }
+
+
+initFilters : List Filter
+initFilters =
+    List.map All filterableCols
 
 
 init : ( Model, Cmd Msg )
@@ -33,6 +58,7 @@ init =
     ( { headers = []
       , rows = []
       , sortBy = Asc Nothing
+      , curFilters = initFilters
       }
     , getRawCsv
     )
@@ -56,6 +82,7 @@ type Msg
     = NoOp
     | ReceiveCsv (Result Http.Error String)
     | ToggleSortBy String
+    | ToggleFilter Filter
 
 
 rowToDict : List String -> List String -> Dict String String
@@ -104,8 +131,56 @@ update msg model =
                 Desc _ ->
                     ( { model | sortBy = Asc (Just key) }, Cmd.none )
 
+        ToggleFilter filter ->
+            let
+                updatedFilters =
+                    List.map (updateFilter filter) model.curFilters
+            in
+                ( { model | curFilters = updatedFilters }, Cmd.none )
+
         _ ->
             ( model, Cmd.none )
+
+
+updateFilter : Filter -> Filter -> Filter
+updateFilter updatingFilter curFilter =
+    case updatingFilter of
+        Include name ->
+            case matchFilter name curFilter of
+                True ->
+                    updatingFilter
+
+                False ->
+                    curFilter
+
+        Exclude name ->
+            case matchFilter name curFilter of
+                True ->
+                    updatingFilter
+
+                False ->
+                    curFilter
+
+        All name ->
+            case matchFilter name curFilter of
+                True ->
+                    updatingFilter
+
+                False ->
+                    curFilter
+
+
+matchFilter : String -> Filter -> Bool
+matchFilter name filter =
+    case filter of
+        Include filterName ->
+            name == filterName
+
+        Exclude filterName ->
+            name == filterName
+
+        All filterName ->
+            name == filterName
 
 
 
@@ -204,25 +279,85 @@ sortRows sortBy a b =
             EQ
 
 
+matchRow : Dict String String -> Filter -> Bool
+matchRow row filter =
+    case filter of
+        Include key ->
+            (Dict.get key row) == Just "1"
+
+        Exclude key ->
+            (Dict.get key row) == Just "0"
+
+        All key ->
+            case Dict.get key row of
+                Nothing ->
+                    False
+
+                _ ->
+                    True
+
+
+applyFilters : List Filter -> Dict String String -> Bool
+applyFilters filters row =
+    List.all (matchRow row) filters
+
+
 viewRows : Model -> Html Msg
-viewRows ({ rows, sortBy } as model) =
+viewRows ({ rows, sortBy, curFilters } as model) =
     let
+        filteredRows =
+            List.filter (applyFilters curFilters) rows
+
         sortedRows =
-            List.sortWith (sortRows sortBy) rows
+            List.sortWith (sortRows sortBy) filteredRows
     in
         div [] (List.map (viewRow model) sortedRows)
 
 
-viewFilters : Html Msg
-viewFilters =
+viewFilterOption : Filter -> List Filter -> Html Msg
+viewFilterOption filter curFilters =
+    let
+        label =
+            case filter of
+                Include name ->
+                    name
+
+                Exclude name ->
+                    "not " ++ name
+
+                All name ->
+                    "all"
+
+        display =
+            case List.member filter curFilters of
+                True ->
+                    "active-filter"
+
+                False ->
+                    ""
+    in
+        div [ onClick (ToggleFilter filter), class display ] [ text label ]
+
+
+viewFilter : List Filter -> String -> Html Msg
+viewFilter curFilters filterName =
+    div [ class "cell" ]
+        [ viewFilterOption (Include filterName) curFilters
+        , viewFilterOption (Exclude filterName) curFilters
+        , viewFilterOption (All filterName) curFilters
+        ]
+
+
+viewFilters : List Filter -> Html Msg
+viewFilters curFilters =
     div [ class "row" ]
-        []
+        (List.map (viewFilter curFilters) filterableCols)
 
 
 viewRankings : Model -> Html Msg
 viewRankings model =
     div []
-        [ viewFilters
+        [ viewFilters model.curFilters
         , viewHeaders model.headers model.sortBy
         , viewRows model
         ]
