@@ -75,6 +75,7 @@ body {
 
 .active-filter {
   color: #2196f3;
+  font-weight: bold;
 }
 
 .filter-option:hover {
