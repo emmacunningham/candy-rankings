@@ -6,7 +6,7 @@ body {
   font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   margin: 0;
   color: #293c4b;
-  background-image: url('http://ak1.picdn.net/shutterstock/videos/26511221/thumb/1.jpg');
+  background-image: url('http://www.myfreephotoshop.com/wp-content/uploads/2014/09/4.gif');
 }
 
 .row {
@@ -75,6 +75,7 @@ body {
 
 .active-filter {
   color: #2196f3;
+  font-weight: bold;
 }
 
 .filter-option:hover {
