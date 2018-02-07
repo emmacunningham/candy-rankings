@@ -85,6 +85,8 @@ body {
 .main {
   background: rgba(255, 255, 255, .8);
   padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 h1 {
